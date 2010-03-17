@@ -24,6 +24,9 @@ import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
 
+import org.apache.maven.artifact.Artifact;
+
+
 /**
  * The Configuration for the Instrumentation.
  * 
@@ -39,15 +42,18 @@ public class ConfigInstrumentation
 
     private List includes;
 
+    
+    private List<String> otherFiles;
+    
     /**
      * Construct a new ConfigInstrumentation object.
      */
-    public ConfigInstrumentation()
-    {
+    public ConfigInstrumentation() {
         this.includes = new ArrayList();
         this.excludes = new ArrayList();
         this.ignores = new ArrayList();
-        this.basedir = new File( System.getProperty( "user.dir" ) );
+        this.otherFiles = new ArrayList<String>();
+        this.basedir = new File(System.getProperty("user.dir"));
     }
 
     /**
@@ -55,9 +61,17 @@ public class ConfigInstrumentation
      * 
      * @param exclude the exlude string.
      */
-    public void addExclude( String exclude )
-    {
-        this.excludes.add( exclude );
+    public void addExclude(String exclude) {
+        this.excludes.add(exclude);
+    }
+
+    /**
+     * Add an additional file to the underlying list.
+     * 
+     * @param otherFile the additional file string.
+     */
+    public void addOtherFile(String otherFile) {
+        this.otherFiles.add(otherFile);
     }
 
     /**
@@ -65,9 +79,8 @@ public class ConfigInstrumentation
      * 
      * @param ignore the ignore string.
      */
-    public void addIgnore( String ignore )
-    {
-        this.ignores.add( ignore );
+    public void addIgnore(String ignore) {
+        this.ignores.add(ignore);
     }
 
     /**
@@ -75,16 +88,14 @@ public class ConfigInstrumentation
      * 
      * @param include the include string.
      */
-    public void addInclude( String include )
-    {
-        this.includes.add( include );
+    public void addInclude(String include) {
+        this.includes.add(include);
     }
 
     /**
      * @return Returns the basedir.
      */
-    public File getBasedir()
-    {
+    public File getBasedir() {
         return basedir;
     }
 
@@ -93,9 +104,17 @@ public class ConfigInstrumentation
      * 
      * @return the exlude list.
      */
-    public List getExcludes()
-    {
+    public List getExcludes() {
         return excludes;
+    }
+
+    /**
+     * Get the additional files List.
+     * 
+     * @return the additional files list.
+     */
+    public List<String> getOtherFiles() {
+        return otherFiles;
     }
 
     /**
@@ -103,8 +122,7 @@ public class ConfigInstrumentation
      * 
      * @return the ignore list.
      */
-    public List getIgnores()
-    {
+    public List getIgnores() {
         return ignores;
     }
 
@@ -113,80 +131,81 @@ public class ConfigInstrumentation
      * 
      * @return the include list.
      */
-    public List getIncludes()
-    {
+    public List getIncludes() {
         return includes;
     }
 
     /**
      * @param basedir The basedir to set.
      */
-    public void setBasedir( File basedir )
-    {
+    public void setBasedir(File basedir) {
         this.basedir = basedir;
     }
 
-    public String toString()
-    {
+    public String toString() {
         StringBuffer sb = new StringBuffer();
-        sb.append( "<ConfigInstrumentation" );
+        sb.append("<ConfigInstrumentation");
 
-        sb.append( " basedir=\"" );
-        if ( this.basedir != null )
-        {
-            sb.append( basedir.getAbsolutePath() );
+        sb.append(" basedir=\"");
+        if (this.basedir != null) {
+            sb.append(basedir.getAbsolutePath());
         }
-        sb.append( "\"" );
+        sb.append("\"");
 
-        if ( !this.includes.isEmpty() )
-        {
-            sb.append( " includes=\"" );
+        if (!this.otherFiles.isEmpty()) {
+            sb.append(" otherFiles=\"");
+            Iterator it = this.otherFiles.iterator();
+            while (it.hasNext()) {
+                String otherFile = (String) it.next();
+                sb.append(otherFile);
+
+                if (it.hasNext()) {
+                    sb.append(" ");
+                }
+            }
+            sb.append("\"");
+        }
+
+        if (!this.includes.isEmpty()) {
+            sb.append(" includes=\"");
             Iterator it = this.includes.iterator();
-            while ( it.hasNext() )
-            {
+            while (it.hasNext()) {
                 String include = (String) it.next();
-                sb.append( include );
+                sb.append(include);
 
-                if ( it.hasNext() )
-                {
-                    sb.append( " " );
+                if (it.hasNext()) {
+                    sb.append(" ");
                 }
             }
-            sb.append( "\"" );
+            sb.append("\"");
         }
 
-        if ( !this.excludes.isEmpty() )
-        {
-            sb.append( " excludes=\"" );
+        if (!this.excludes.isEmpty()) {
+            sb.append(" excludes=\"");
             Iterator it = this.excludes.iterator();
-            while ( it.hasNext() )
-            {
+            while (it.hasNext()) {
                 String exclude = (String) it.next();
-                sb.append( exclude );
-                if ( it.hasNext() )
-                {
-                    sb.append( " " );
+                sb.append(exclude);
+                if (it.hasNext()) {
+                    sb.append(" ");
                 }
             }
-            sb.append( "\"" );
+            sb.append("\"");
         }
 
-        if ( !this.ignores.isEmpty() )
-        {
-            sb.append( " ignores=\"" );
+        if (!this.ignores.isEmpty()) {
+            sb.append(" ignores=\"");
             Iterator it = this.ignores.iterator();
-            while ( it.hasNext() )
-            {
+            while (it.hasNext()) {
                 String ignore = (String) it.next();
-                sb.append( ignore );
-                if ( it.hasNext() )
-                {
-                    sb.append( " " );
+                sb.append(ignore);
+                if (it.hasNext()) {
+                    sb.append(" ");
                 }
             }
-            sb.append( "\"" );
+            sb.append("\"");
         }
 
-        return sb.append( " />" ).toString();
+        return sb.append(" />").toString();
     }
 }

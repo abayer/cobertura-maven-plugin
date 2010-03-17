@@ -21,12 +21,21 @@ package org.codehaus.mojo.cobertura;
 
 import java.io.File;
 import java.util.List;
+import java.util.ArrayList;
 
+import org.codehaus.plexus.util.FileUtils;
+import org.apache.maven.artifact.Artifact;
 import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.cobertura.configuration.ConfigCheck;
 import org.codehaus.mojo.cobertura.configuration.ConfigInstrumentation;
+import org.codehaus.mojo.cobertura.configuration.InheritProject;
 import org.codehaus.mojo.cobertura.tasks.AbstractTask;
+import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
+import org.apache.maven.artifact.resolver.ArtifactResolutionException;
+import org.apache.maven.artifact.resolver.ArtifactResolver;
+import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
+import org.apache.maven.artifact.repository.ArtifactRepository;
 
 /**
  * Abstract Base for Cobertura Mojos.
@@ -34,8 +43,7 @@ import org.codehaus.mojo.cobertura.tasks.AbstractTask;
  * @author <a href="mailto:joakim@erdfelt.com">Joakim Erdfelt</a>
  */
 public abstract class AbstractCoberturaMojo
-    extends AbstractMojo
-{
+    extends AbstractMojo {
     /**
      * <i>Maven Internal</i>: Project to interact with.
      * 
@@ -45,6 +53,50 @@ public abstract class AbstractCoberturaMojo
      */
     protected MavenProject project;
 
+    /**
+     * @component
+     * @readonly
+     * @required
+     *
+     * @noinspection UnusedDeclaration
+     */
+    protected ArtifactMetadataSource artifactMetadataSource;
+
+    /**
+     * @parameter expression="${localRepository}"
+     * @readonly
+     * @required
+     *
+     * @noinspection UnusedDeclaration
+     */
+    protected ArtifactRepository artifactRepository;
+
+    /**
+     * @component
+     * @readonly
+     * @required
+     *
+     * @noinspection UnusedDeclaration
+     */
+    protected ArtifactResolver artifactResolver;
+
+    /**
+     * The directory where we put the instrumented files.
+     *
+     * @parameter default-value="${project.build.directory}/generated-classes/cobertura"
+     * @required
+     * @readonly
+     */
+    protected String instrumentedDir;
+
+
+    /**
+     * The inherited projects info.
+     *
+     * @parameter expression="${coberutra.inheritedProjects}"
+     */
+    protected ArrayList<InheritProject> inheritProjects;
+    
     /**
      * Maximum memory to pass JVM of Cobertura processes.
      * 
@@ -94,15 +146,28 @@ public abstract class AbstractCoberturaMojo
     protected List pluginClasspathList;
 
     /**
+     * @return Returns the inherited projects.
+     */
+    protected ArrayList<InheritProject> getInheritProjects() {
+        return this.inheritProjects;
+    }
+
+    /**
+     * @param inheritProjects the inheritProjects to set.
+     */
+    public void setInheritProjects(ArrayList<InheritProject> inheritProjects) {
+        this.inheritProjects = inheritProjects;
+    }
+    
+    /**
      * Setup the Task defaults.
      * 
      * @param task the task to setup.
      */
-    public void setTaskDefaults( AbstractTask task )
-    {
-        task.setLog( getLog() );
-        task.setPluginClasspathList( pluginClasspathList );
-        task.setMaxmem( maxmem );
-        task.setQuiet( quiet );
+    public void setTaskDefaults(AbstractTask task) {
+        task.setLog(getLog());
+        task.setPluginClasspathList(pluginClasspathList);
+        task.setMaxmem(maxmem);
+        task.setQuiet(quiet);
     }
 }

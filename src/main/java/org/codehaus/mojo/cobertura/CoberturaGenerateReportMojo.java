@@ -24,6 +24,12 @@ import java.io.File;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.mojo.cobertura.tasks.GenerateReportTask;
+import org.codehaus.mojo.cobertura.configuration.InheritProject;
+import org.apache.maven.project.MavenProjectHelper;
+import org.apache.maven.artifact.Artifact;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Cobertura report generation.
@@ -34,12 +40,20 @@ import org.codehaus.mojo.cobertura.tasks.GenerateReportTask;
 public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
 
     /**
+     * Maven ProjectHelper
+     * 
+     * @component
+     * @readonly
+     */
+    private MavenProjectHelper projectHelper;
+
+    /**
      * The format of the report. (can be 'html' or 'xml'. defaults to 'xml')
      * 
      * @parameter
      */
     private String outputFormat = "xml";
-    
+
     /**
      * The output directory for the report.
      * 
@@ -64,8 +78,16 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
                 task.setDataFile(dataFile);
                 task.setOutputFormat(outputFormat);
                 task.setOutputDirectory(outputDirectory);
-                task.setCompileSourceRoots(project.getCompileSourceRoots());
+                List<String> allSourceRoots = new ArrayList<String>();
+                for (InheritProject ip : inheritProjects) {
+                    allSourceRoots.add(ip.getRelativeSourcePath());
+                }
+                allSourceRoots.addAll(project.getCompileSourceRoots());
+                task.setCompileSourceRoots(allSourceRoots);
                 task.execute();
+                
+                projectHelper.attachArtifact(project, "ser", "cobertura", dataFile); 
+                
             }
             
             String orginalOutputDirectory = System.getProperty("orginal.project.build.outputDirectory");
@@ -80,9 +102,9 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
             }
             
         }
-
+        
     }
-
+    
     public void setOutputDirectory(File outputDirectory) {
         this.outputDirectory = outputDirectory;
     }

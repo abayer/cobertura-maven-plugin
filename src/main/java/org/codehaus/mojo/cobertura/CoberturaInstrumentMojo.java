@@ -26,14 +26,19 @@ import java.util.LinkedHashSet;
 import java.util.Map;
 import java.util.Properties;
 import java.util.Set;
+import java.util.List;
+import java.util.ArrayList;
 
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.ArtifactUtils;
 import org.apache.maven.artifact.factory.ArtifactFactory;
 import org.apache.maven.artifact.handler.ArtifactHandler;
+
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.mojo.cobertura.configuration.ConfigInstrumentation;
+import org.codehaus.mojo.cobertura.configuration.InheritProject;
 import org.codehaus.mojo.cobertura.tasks.InstrumentTask;
+import org.codehaus.mojo.cobertura.tasks.MergeTask;
 import org.codehaus.plexus.util.FileUtils;
 import org.codehaus.plexus.util.IOUtil;
 
@@ -43,9 +48,7 @@ import org.codehaus.plexus.util.IOUtil;
  * @author <a href="mailto:joakim@erdfelt.com">Joakim Erdfelt</a>
  * @goal instrument
  */
-public class CoberturaInstrumentMojo
-    extends AbstractCoberturaMojo
-{
+public class CoberturaInstrumentMojo extends AbstractCoberturaMojo {
     /**
      * Artifact factory.
      * 
@@ -56,74 +59,88 @@ public class CoberturaInstrumentMojo
     /**
      * build up a command line from the parameters and run Cobertura to instrument the code.
      */
-    public void execute()
-        throws MojoExecutionException
-    {
+    public void execute() throws MojoExecutionException {
         ArtifactHandler artifactHandler = project.getArtifact().getArtifactHandler();
-        if ( !"java".equals( artifactHandler.getLanguage() ) )
-        {
+        if (!"java".equals(artifactHandler.getLanguage())) {
             getLog().info(
-                "Not executing cobertura:instrument as the project is not a Java classpath-capable package" );
+                "Not executing cobertura:instrument as the project is not a Java classpath-capable package");
         }
-        else
-        {
-            File instrumentedDirectory = new File( project.getBuild().getDirectory(), "generated-classes/cobertura" );
-
-            if ( !instrumentedDirectory.exists() )
-            {
+        else {
+            File instrumentedDirectory = new File(project.getBuild().getDirectory(), "generated-classes/cobertura");
+            
+            if (!instrumentedDirectory.exists()) {
                 instrumentedDirectory.mkdirs();
             }
-
+            
             // ensure that instrumentation config is set here, not via maven plugin api @required attribute, as this is
             // not a required object from the pom configuration's point of view.
-            if ( instrumentation == null )
-            {
+            if (instrumentation == null) {
                 instrumentation = new ConfigInstrumentation();
             }
 
             /* ensure that the default includes is set */
-            if ( instrumentation.getIncludes().isEmpty() )
-            {
-                instrumentation.addInclude( "**/*.class" );
+            if (instrumentation.getIncludes().isEmpty()) {
+                instrumentation.addInclude("**/*.class");
             }
 
-            File outputDirectory = new File( project.getBuild().getOutputDirectory() );
-            if ( !outputDirectory.exists() )
-            {
+            File outputDirectory = new File(project.getBuild().getOutputDirectory());
+            if (!outputDirectory.exists()) {
                 outputDirectory.mkdirs();
             }
 
             // Copy all of the classes into the instrumentation basedir.
-            try
-            {
-                FileUtils.copyDirectoryStructure( outputDirectory, instrumentedDirectory );
+            try {
+                FileUtils.copyDirectoryStructure(outputDirectory, instrumentedDirectory);
             }
-            catch ( IOException e )
-            {
-                throw new MojoExecutionException( "Unable to prepare instrumentation directory.", e );
+            catch (IOException e) {
+                throw new MojoExecutionException("Unable to prepare instrumentation directory.", e);
             }
-
-            instrumentation.setBasedir( instrumentedDirectory );
-
+            
             // Cobertura requires an existing dir
-            if ( !dataFile.getParentFile().exists() )
-            {
+            if (!dataFile.getParentFile().exists()) {
                 dataFile.getParentFile().mkdirs();
             }
 
+            List<File> dataFilesToMerge = new ArrayList<File>();
+
+            if (inheritProjects!=null) {
+                for (InheritProject ip : inheritProjects) {
+                    // Copy the artifact to the instrumentation directory,
+                    // and then copy the data file and record it.
+                    ip.copyMainArtifact(project, instrumentedDirectory);
+                    
+                    ip.copySerArtifact(project, dataFile.getParentFile());
+                    
+                    dataFilesToMerge.add(new File(dataFile.getParentFile(),
+                                                  InheritProject.getFormattedFileName(ip.getSerArtifact(project), false)));
+                }
+            }
+            
+            // If we've got datafiles from inherited projects to merge...
+            if (dataFilesToMerge.size() > 0) {
+                MergeTask mTask = new MergeTask();
+                setTaskDefaults(mTask);
+                mTask.setSourceDataFiles(dataFilesToMerge);
+
+                mTask.execute();
+            }
+                    
+            
+            instrumentation.setBasedir(instrumentedDirectory);
+
             // Execute the instrumentation task.
             InstrumentTask task = new InstrumentTask();
-            setTaskDefaults( task );
-            task.setConfig( instrumentation );
-            task.setDestinationDir( instrumentedDirectory );
-            task.setDataFile( dataFile );
+            setTaskDefaults(task);
+            task.setConfig(instrumentation);
+            task.setDestinationDir(instrumentedDirectory);
+            task.setDataFile(dataFile);
 
             task.execute();
 
             addCoberturaDependenciesToTestClasspath();
 
             // Old, Broken way
-            System.setProperty( "net.sourceforge.cobertura.datafile", dataFile.getPath() );
+            System.setProperty("net.sourceforge.cobertura.datafile", dataFile.getPath());
 
             /*
              * New, Fixed way. See
@@ -131,57 +148,49 @@ public class CoberturaInstrumentMojo
              * to Cobertura 1.8 that fixes the datafile location.
              */
             Properties props = new Properties();
-            props.setProperty( "net.sourceforge.cobertura.datafile", dataFile.getPath() );
+            props.setProperty("net.sourceforge.cobertura.datafile", dataFile.getPath());
 
-            File coberturaPropertiesFile = new File( instrumentedDirectory, "cobertura.properties" );
+            File coberturaPropertiesFile = new File(instrumentedDirectory, "cobertura.properties");
             FileOutputStream fos = null;
-            try
-            {
-                fos = new FileOutputStream( coberturaPropertiesFile );
-                props.store( fos, "Generated by maven-cobertura-plugin for project " + project.getId() );
+            try {
+                fos = new FileOutputStream(coberturaPropertiesFile);
+                props.store(fos, "Generated by maven-cobertura-plugin for project " + project.getId());
             }
-            catch ( IOException e )
-            {
-                throw new MojoExecutionException( "Unable to write cobertura.properties file.", e );
+            catch (IOException e) {
+                throw new MojoExecutionException("Unable to write cobertura.properties file.", e);
             }
-            finally
-            {
-                IOUtil.close( fos );
+            finally {
+                IOUtil.close(fos);
             }
 
             // Set the instrumented classes to be the new output directory (for other plugins to pick up)
-            project.getBuild().setOutputDirectory( instrumentedDirectory.getPath() );
-            System.setProperty( "project.build.outputDirectory", instrumentedDirectory.getPath() );
+            project.getBuild().setOutputDirectory(instrumentedDirectory.getPath());
+            System.setProperty("project.build.outputDirectory", instrumentedDirectory.getPath());
         }
     }
 
-    private void addCoberturaDependenciesToTestClasspath()
-        throws MojoExecutionException
-    {
-        Map pluginArtifactMap = ArtifactUtils.artifactMapByVersionlessId( pluginClasspathList );
-        Artifact coberturaArtifact = (Artifact) pluginArtifactMap.get( "net.sourceforge.cobertura:cobertura-runtime" );
+    private void addCoberturaDependenciesToTestClasspath() throws MojoExecutionException {
+        Map pluginArtifactMap = ArtifactUtils.artifactMapByVersionlessId(pluginClasspathList);
+        Artifact coberturaArtifact = (Artifact) pluginArtifactMap.get("net.sourceforge.cobertura:cobertura-runtime");
 
-        if ( coberturaArtifact == null )
-        {
-            getLog().error( "pluginArtifactMap: " + pluginArtifactMap );
+        if (coberturaArtifact == null) {
+            getLog().error("pluginArtifactMap: " + pluginArtifactMap);
 
-            throw new MojoExecutionException( "Couldn't find 'cobertura' artifact in plugin dependencies" );
+            throw new MojoExecutionException("Couldn't find 'cobertura' artifact in plugin dependencies");
         }
 
-        coberturaArtifact = artifactScopeToTest( coberturaArtifact );
+        coberturaArtifact = artifactScopeToTest(coberturaArtifact);
 
-        if ( this.project.getDependencyArtifacts() != null )
-        {
-            Set set = new LinkedHashSet( this.project.getDependencyArtifacts() );
-            set.add( coberturaArtifact );
-            this.project.setDependencyArtifacts( set );
+        if (this.project.getDependencyArtifacts() != null) {
+            Set set = new LinkedHashSet(this.project.getDependencyArtifacts());
+            set.add(coberturaArtifact);
+            this.project.setDependencyArtifacts(set);
         }
     }
 
-    private Artifact artifactScopeToTest( Artifact artifact )
-    {
-        return factory.createArtifact( artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
-                                       Artifact.SCOPE_TEST, artifact.getType() );
+    private Artifact artifactScopeToTest(Artifact artifact) {
+        return factory.createArtifact(artifact.getGroupId(), artifact.getArtifactId(), artifact.getVersion(),
+                                       Artifact.SCOPE_TEST, artifact.getType());
     }
 
 }

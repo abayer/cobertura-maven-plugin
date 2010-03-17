@@ -41,8 +41,7 @@ import org.codehaus.mojo.cobertura.tasks.ReportTask;
  * @execute phase="test" lifecycle="cobertura"
  */
 public class CoberturaReportMojo
-    extends AbstractMavenReport
-{
+    extends AbstractMavenReport {
     /**
      * The format of the report. (supports 'html' or 'xml'. defaults to 'html')
      * 
@@ -128,155 +127,133 @@ public class CoberturaReportMojo
     /**
      * @see org.apache.maven.reporting.MavenReport#getName(java.util.Locale)
      */
-    public String getName( Locale locale )
-    {
-        return getBundle( locale ).getString( "report.cobertura.name" );
+    public String getName(Locale locale) {
+        return getBundle(locale).getString("report.cobertura.name");
     }
 
     /**
      * @see org.apache.maven.reporting.MavenReport#getDescription(java.util.Locale)
      */
-    public String getDescription( Locale locale )
-    {
-        return getBundle( locale ).getString( "report.cobertura.description" );
+    public String getDescription(Locale locale) {
+        return getBundle(locale).getString("report.cobertura.description");
     }
 
     /**
      * @see org.apache.maven.reporting.AbstractMavenReport#getOutputDirectory()
      */
-    protected String getOutputDirectory()
-    {
+    protected String getOutputDirectory() {
         return outputDirectory.getAbsolutePath();
     }
 
     /**
      * @see org.apache.maven.reporting.AbstractMavenReport#getProject()
      */
-    protected MavenProject getProject()
-    {
+    protected MavenProject getProject() {
         return project;
     }
 
     /**
      * @see org.apache.maven.reporting.AbstractMavenReport#getSiteRenderer()
      */
-    protected SiteRenderer getSiteRenderer()
-    {
+    protected SiteRenderer getSiteRenderer() {
         return siteRenderer;
     }
 
     /**
      * @see org.apache.maven.reporting.MavenReport#generate(org.codehaus.doxia.sink.Sink, java.util.Locale)
      */
-    public void generate( Sink sink, Locale locale )
-        throws MavenReportException
-    {
-        executeReport( locale );
+    public void generate(Sink sink, Locale locale)
+        throws MavenReportException {
+        executeReport(locale);
     }
 
-    private void executeReportTask( ReportTask task, String format )
-        throws MavenReportException
-    {
-        task.setOutputFormat( format );
+    private void executeReportTask(ReportTask task, String format)
+        throws MavenReportException {
+        task.setOutputFormat(format);
 
         // execute task
-        try
-        {
+        try {
             task.execute();
         }
-        catch ( MojoExecutionException e )
-        {
-            // throw new MavenReportException( "Error in Cobertura Report generation: " + e.getMessage(), e );
+        catch (MojoExecutionException e) {
+            // throw new MavenReportException("Error in Cobertura Report generation: " + e.getMessage(), e);
             // better don't break the build if report is not generated, also due to the sporadic MCOBERTURA-56
-            getLog().error( "Error in Cobertura Report generation: " + e.getMessage(), e );
+            getLog().error("Error in Cobertura Report generation: " + e.getMessage(), e);
         }
     }
 
     /**
      * @see org.apache.maven.reporting.AbstractMavenReport#executeReport(java.util.Locale)
      */
-    protected void executeReport( Locale locale )
-        throws MavenReportException
-    {
-        if ( !canGenerateReport() )
-        {
+    protected void executeReport(Locale locale)
+        throws MavenReportException {
+        if (!canGenerateReport()) {
             return;
         }
 
         ReportTask task = new ReportTask();
 
         // task defaults
-        task.setLog( getLog() );
-        task.setPluginClasspathList( pluginClasspathList );
-        task.setQuiet( quiet );
+        task.setLog(getLog());
+        task.setPluginClasspathList(pluginClasspathList);
+        task.setQuiet(quiet);
 
         // task specifics
-        task.setMaxmem( maxmem );
-        task.setDataFile( dataFile );
-        task.setOutputDirectory( outputDirectory );
-        task.setCompileSourceRoots( getCompileSourceRoots() );
-        task.setSourceEncoding( encoding );
+        task.setMaxmem(maxmem);
+        task.setDataFile(dataFile);
+        task.setOutputDirectory(outputDirectory);
+        task.setCompileSourceRoots(getCompileSourceRoots());
+        task.setSourceEncoding(encoding);
 
 
-        if ( format != null )
-        {
+        if (format != null) {
             formats = new String[] { format };
         }
 
-        for ( int i = 0; i < formats.length; i++ )
-        {
-            executeReportTask( task, formats[i] );
+        for (int i = 0; i < formats.length; i++) {
+            executeReportTask(task, formats[i]);
         }
     }
 
     /**
      * @see org.apache.maven.reporting.MavenReport#getOutputName()
      */
-    public String getOutputName()
-    {
+    public String getOutputName() {
         return "cobertura/index";
     }
 
-    public boolean isExternalReport()
-    {
+    public boolean isExternalReport() {
         return true;
     }
 
-    public boolean canGenerateReport()
-    {
+    public boolean canGenerateReport() {
         /*
          * Don't have to check for source directories or java code or the like for report generation. Checks for source
          * directories or java project classpath existence should only occur in the Instrument Mojo.
          */
-        if ( dataFile == null || !dataFile.exists() )
-        {
+        if (dataFile == null || !dataFile.exists()) {
             getLog().info(
                            "Not executing cobertura:report as the cobertura data file (" + dataFile
-                               + ") could not be found" );
+                               + ") could not be found");
             return false;
         }
-        else
-        {
+        else {
             return true;
         }
     }
 
-    private List getCompileSourceRoots()
-    {
+    private List getCompileSourceRoots() {
         return project.getExecutionProject().getCompileSourceRoots();
     }
 
     /**
      * @see org.apache.maven.reporting.AbstractMavenReport#setReportOutputDirectory(java.io.File)
      */
-    public void setReportOutputDirectory( File reportOutputDirectory )
-    {
-        if ( ( reportOutputDirectory != null ) && ( !reportOutputDirectory.getAbsolutePath().endsWith( "cobertura" ) ) )
-        {
-            this.outputDirectory = new File( reportOutputDirectory, "cobertura" );
+    public void setReportOutputDirectory(File reportOutputDirectory) {
+        if ((reportOutputDirectory != null) && (!reportOutputDirectory.getAbsolutePath().endsWith("cobertura"))) {
+            this.outputDirectory = new File(reportOutputDirectory, "cobertura");
         }
-        else
-        {
+        else {
             this.outputDirectory = reportOutputDirectory;
         }
     }
@@ -287,9 +264,8 @@ public class CoberturaReportMojo
      * @param locale The locale for the report, must not be <code>null</code>.
      * @return The resource bundle for the requested locale.
      */
-    private ResourceBundle getBundle( Locale locale )
-    {
-        return ResourceBundle.getBundle( "cobertura-report", locale, getClass().getClassLoader() );
+    private ResourceBundle getBundle(Locale locale) {
+        return ResourceBundle.getBundle("cobertura-report", locale, getClass().getClassLoader());
     }
 
 }
