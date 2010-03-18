@@ -24,7 +24,6 @@ import java.io.File;
 import org.apache.maven.artifact.handler.ArtifactHandler;
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.mojo.cobertura.tasks.GenerateReportTask;
-import org.codehaus.mojo.cobertura.configuration.InheritProject;
 import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.artifact.Artifact;
 
@@ -90,15 +89,15 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
                 
             }
             
-            String orginalOutputDirectory = System.getProperty("orginal.project.build.outputDirectory");
+            String originalOutputDirectory = System.getProperty("original.project.build.outputDirectory");
             getLog().info("Current output directory: " + System.getProperty("project.build.outputDirectory"));
-            getLog().info("Orginal output directory: " + orginalOutputDirectory);
-            getLog().info("Changing back to orginal directory.");
+            getLog().info("Original output directory: " + originalOutputDirectory);
+            getLog().info("Changing back to original directory.");
             
-            if (orginalOutputDirectory != null) {
-                project.getBuild().setOutputDirectory(orginalOutputDirectory);
-                System.setProperty("project.build.outputDirectory", orginalOutputDirectory);
-                System.setProperty("orginal.project.build.outputDirectory" , "");
+            if (originalOutputDirectory != null) {
+                project.getBuild().setOutputDirectory(originalOutputDirectory);
+                System.setProperty("project.build.outputDirectory", originalOutputDirectory);
+                System.setProperty("original.project.build.outputDirectory" , "");
             }
             
         }

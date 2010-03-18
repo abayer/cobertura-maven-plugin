@@ -29,13 +29,13 @@ import org.apache.maven.plugin.AbstractMojo;
 import org.apache.maven.project.MavenProject;
 import org.codehaus.mojo.cobertura.configuration.ConfigCheck;
 import org.codehaus.mojo.cobertura.configuration.ConfigInstrumentation;
-import org.codehaus.mojo.cobertura.configuration.InheritProject;
 import org.codehaus.mojo.cobertura.tasks.AbstractTask;
 import org.apache.maven.artifact.resolver.ArtifactNotFoundException;
 import org.apache.maven.artifact.resolver.ArtifactResolutionException;
 import org.apache.maven.artifact.resolver.ArtifactResolver;
 import org.apache.maven.artifact.metadata.ArtifactMetadataSource;
 import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.artifact.factory.ArtifactFactory;
 
 /**
  * Abstract Base for Cobertura Mojos.
@@ -52,6 +52,15 @@ public abstract class AbstractCoberturaMojo
      * @readonly
      */
     protected MavenProject project;
+
+    /**
+     * @component
+     * @readonly
+     * @required
+     *
+     * @noinspection UnusedDeclaration
+     */
+    protected ArtifactFactory artifactFactory;
 
     /**
      * @component

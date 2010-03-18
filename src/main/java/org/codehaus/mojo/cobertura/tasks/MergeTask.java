@@ -35,12 +35,16 @@ import org.codehaus.plexus.util.StringUtils;
 public class MergeTask extends AbstractTask {
 
     private List<File> sourceDataFiles;
+    private File dataFile;
+
     
     public MergeTask() {
         super("net.sourceforge.cobertura.merge.Main");
     }
 
     public void execute() throws MojoExecutionException {
+        cmdLineArgs.addArg("--datafile", dataFile.getAbsolutePath());
+        
         for (File sdf : sourceDataFiles) {
             cmdLineArgs.addArg(sdf.getAbsolutePath());
         }
@@ -57,6 +61,14 @@ public class MergeTask extends AbstractTask {
 
     }
 
+    public void setDataFile(File dataFile) {
+        this.dataFile = dataFile;
+    }
+
+    public File getDataFile() {
+        return dataFile;
+    }
+    
     public void setSourceDataFiles(List<File> sourceDataFiles) {
         this.sourceDataFiles = Collections.unmodifiableList(sourceDataFiles);
     }

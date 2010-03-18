@@ -36,7 +36,6 @@ import org.apache.maven.artifact.handler.ArtifactHandler;
 
 import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.mojo.cobertura.configuration.ConfigInstrumentation;
-import org.codehaus.mojo.cobertura.configuration.InheritProject;
 import org.codehaus.mojo.cobertura.tasks.InstrumentTask;
 import org.codehaus.mojo.cobertura.tasks.MergeTask;
 import org.codehaus.plexus.util.FileUtils;
@@ -105,6 +104,11 @@ public class CoberturaInstrumentMojo extends AbstractCoberturaMojo {
 
             if (inheritProjects!=null) {
                 for (InheritProject ip : inheritProjects) {
+                    ip.setArtifactMetadataSource(artifactMetadataSource);
+                    ip.setArtifactRepository(artifactRepository);
+                    ip.setArtifactResolver(artifactResolver);
+                    ip.setArtifactFactory(artifactFactory);
+                    
                     // Copy the artifact to the instrumentation directory,
                     // and then copy the data file and record it.
                     ip.copyMainArtifact(project, instrumentedDirectory);
@@ -121,7 +125,7 @@ public class CoberturaInstrumentMojo extends AbstractCoberturaMojo {
                 MergeTask mTask = new MergeTask();
                 setTaskDefaults(mTask);
                 mTask.setSourceDataFiles(dataFilesToMerge);
-
+                mTask.setDataFile(dataFile);
                 mTask.execute();
             }
                     
@@ -164,8 +168,10 @@ public class CoberturaInstrumentMojo extends AbstractCoberturaMojo {
             }
 
             // Set the instrumented classes to be the new output directory (for other plugins to pick up)
-            project.getBuild().setOutputDirectory(instrumentedDirectory.getPath());
-            System.setProperty("project.build.outputDirectory", instrumentedDirectory.getPath());
+            System.setProperty( "original.project.build.outputDirectory", project.getBuild().getOutputDirectory() );
+            project.getBuild().setOutputDirectory( instrumentedDirectory.getPath() );
+            System.setProperty( "project.build.outputDirectory", instrumentedDirectory.getPath() );
+
         }
     }
 

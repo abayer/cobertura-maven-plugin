@@ -1,4 +1,4 @@
-package org.codehaus.mojo.cobertura.configuration;
+package org.codehaus.mojo.cobertura;
 
 /*
  * Licensed to the Apache Software Foundation (ASF) under one
@@ -38,32 +38,12 @@ import java.util.Collections;
 import org.codehaus.plexus.util.StringUtils;
 
 public class InheritProject {
-    /**
-     * @component
-     * @readonly
-     * @required
-     *
-     * @noinspection UnusedDeclaration
-     */
-    protected ArtifactMetadataSource artifactMetadataSource;
 
-    /**
-     * @parameter expression="${localRepository}"
-     * @readonly
-     * @required
-     *
-     * @noinspection UnusedDeclaration
-     */
-    protected ArtifactRepository artifactRepository;
+    private ArtifactMetadataSource artifactMetadataSource;
 
-    /**
-     * @component
-     * @readonly
-     * @required
-     *
-     * @noinspection UnusedDeclaration
-     */
-    protected ArtifactResolver artifactResolver;
+    private ArtifactRepository artifactRepository;
+
+    private ArtifactResolver artifactResolver;
 
     /**
      * Group ID of project
@@ -105,14 +85,7 @@ public class InheritProject {
      */
     private String relativeSourcePath;
 
-    /**
-     * @component
-     * @readonly
-     * @required
-     *
-     * @noinspection UnusedDeclaration
-     */
-    protected ArtifactFactory artifactFactory;
+    private ArtifactFactory artifactFactory;
 
     public InheritProject() {}
     
@@ -124,8 +97,23 @@ public class InheritProject {
         this.type = type;
         this.relativeSourcePath = relativeSourcePath;
     }
-    
-    
+
+    public void setArtifactMetadataSource(ArtifactMetadataSource ams) {
+        this.artifactMetadataSource = ams;
+    }
+
+    public void setArtifactRepository(ArtifactRepository ar) {
+        this.artifactRepository = ar;
+    }
+
+    public void setArtifactResolver(ArtifactResolver ar) {
+        this.artifactResolver = ar;
+    }
+
+    public void setArtifactFactory(ArtifactFactory af) {
+        this.artifactFactory = af;
+    }
+
     private String filterEmptyString(String in) {
         if (in == null || in.equals("")) {
             return null;
@@ -290,13 +278,13 @@ public class InheritProject {
         catch (InvalidVersionSpecificationException e) {
             throw new MojoExecutionException("Could not create range for version: " + version, e);
         }
-
+        
         return artifactFactory.createDependencyArtifact(groupId,
                                                         artifactId,
                                                         range,
                                                         argType,
                                                         classifier,
-                                                        Artifact.SCOPE_PROVIDED);
+                                                        Artifact.SCOPE_COMPILE);
     }
     
     /**

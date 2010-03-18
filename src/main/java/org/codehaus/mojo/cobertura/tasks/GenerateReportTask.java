@@ -32,8 +32,7 @@ import org.codehaus.plexus.util.StringUtils;
  * 
  * @author Witek Wołejszo ww@touk.pl
  */
-public class GenerateReportTask extends AbstractTask
-{
+public class GenerateReportTask extends AbstractTask {
 
     private File dataFile;
     
@@ -44,46 +43,39 @@ public class GenerateReportTask extends AbstractTask
     private List compileSourceRoots;
 
 
-    public GenerateReportTask()
-    {
-        super( "net.sourceforge.cobertura.reporting.Main" );
+    public GenerateReportTask() {
+        super("net.sourceforge.cobertura.reporting.Main");
     }
 
-    public void execute() throws MojoExecutionException
-    {
+    public void execute() throws MojoExecutionException {
         getOutputDirectory().mkdirs();
 
-        for ( Iterator i = getCompileSourceRoots().iterator(); i.hasNext(); )
-        {
+        for (Iterator i = getCompileSourceRoots().iterator(); i.hasNext();) {
             String directory = (String) i.next();
-            cmdLineArgs.addArg( "--source", directory );
+            if (!directory.equals("--source")) 
+                cmdLineArgs.addArg("--source", directory);
         }
 
-        if ( getOutputDirectory() != null )
-        {
-            cmdLineArgs.addArg( "--destination", getOutputDirectory().getAbsolutePath() );
+        if (getOutputDirectory() != null) {
+            cmdLineArgs.addArg("--destination", getOutputDirectory().getAbsolutePath());
         }
 
-        if ( dataFile != null )
-        {
-            cmdLineArgs.addArg( "--datafile", dataFile.getAbsolutePath() );
+        if (dataFile != null) {
+            cmdLineArgs.addArg("--datafile", dataFile.getAbsolutePath());
         }
 
-        if ( StringUtils.isNotEmpty( getOutputFormat() ) )
-        {
-            cmdLineArgs.addArg( "--format", getOutputFormat() );
+        if (StringUtils.isNotEmpty(getOutputFormat())) {
+            cmdLineArgs.addArg("--format", getOutputFormat());
         }
 
         int returnCode = executeJava();
 
         // Check the return code and print a message
-        if ( returnCode == 0 )
-        {
-            getLog().info( "Cobertura Report generation was successful." );
+        if (returnCode == 0) {
+            getLog().info("Cobertura Report generation was successful.");
         }
-        else
-        {
-            throw new MojoExecutionException( "Unable to generate Cobertura Report for project." );
+        else {
+            throw new MojoExecutionException("Unable to generate Cobertura Report for project.");
         }
 
     }
@@ -91,16 +83,14 @@ public class GenerateReportTask extends AbstractTask
     /**
      * @return Returns the dataFile.
      */
-    public File getDataFile()
-    {
+    public File getDataFile() {
         return dataFile;
     }
 
     /**
      * @param dataFile The dataFile to set.
      */
-    public void setDataFile( File dataFile )
-    {
+    public void setDataFile(File dataFile) {
         this.dataFile = dataFile;
     }
 
@@ -121,7 +111,7 @@ public class GenerateReportTask extends AbstractTask
     }
 
     public void setCompileSourceRoots(List compileSourceRoots) {
-        this.compileSourceRoots = Collections.unmodifiableList( compileSourceRoots );
+        this.compileSourceRoots = Collections.unmodifiableList(compileSourceRoots);
     }
 
     public List getCompileSourceRoots() {
