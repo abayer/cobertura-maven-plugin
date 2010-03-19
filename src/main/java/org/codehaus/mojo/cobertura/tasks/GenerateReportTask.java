@@ -50,11 +50,6 @@ public class GenerateReportTask extends AbstractTask {
     public void execute() throws MojoExecutionException {
         getOutputDirectory().mkdirs();
 
-        for (Iterator i = getCompileSourceRoots().iterator(); i.hasNext();) {
-            String directory = (String) i.next();
-            if (!directory.equals("--source")) 
-                cmdLineArgs.addArg("--source", directory);
-        }
 
         if (getOutputDirectory() != null) {
             cmdLineArgs.addArg("--destination", getOutputDirectory().getAbsolutePath());
@@ -66,6 +61,11 @@ public class GenerateReportTask extends AbstractTask {
 
         if (StringUtils.isNotEmpty(getOutputFormat())) {
             cmdLineArgs.addArg("--format", getOutputFormat());
+        }
+
+        for (Iterator i = getCompileSourceRoots().iterator(); i.hasNext();) {
+            String directory = (String) i.next();
+            cmdLineArgs.addArg(directory);
         }
 
         int returnCode = executeJava();

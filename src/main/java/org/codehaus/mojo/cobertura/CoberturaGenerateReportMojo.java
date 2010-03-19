@@ -26,6 +26,7 @@ import org.apache.maven.plugin.MojoExecutionException;
 import org.codehaus.mojo.cobertura.tasks.GenerateReportTask;
 import org.apache.maven.project.MavenProjectHelper;
 import org.apache.maven.artifact.Artifact;
+import org.apache.maven.reporting.MavenReportException;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -47,11 +48,11 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
     private MavenProjectHelper projectHelper;
 
     /**
-     * The format of the report. (can be 'html' or 'xml'. defaults to 'xml')
+     * The format of the report. (can be 'html' and/or 'xml'. defaults to 'html')
      * 
      * @parameter
      */
-    private String outputFormat = "xml";
+    private String[] formats = new String[] { "html" };
 
     /**
      * The output directory for the report.
@@ -61,6 +62,21 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
      */
     private File outputDirectory;
     
+    private void executeGenerateReportTask(GenerateReportTask task, String format) {
+        task.setOutputFormat(format);
+
+        // execute task
+        try {
+            task.execute();
+        }
+        catch (MojoExecutionException e) {
+            // throw new MavenReportException("Error in Cobertura Report generation: " + e.getMessage(), e);
+            // better don't break the build if report is not generated, also due to the sporadic MCOBERTURA-56
+            getLog().error("Error in Cobertura Report generation: " + e.getMessage(), e);
+        }
+    }
+
+
     public void execute() throws MojoExecutionException {
         
         ArtifactHandler artifactHandler = project.getArtifact().getArtifactHandler();
@@ -75,7 +91,6 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
                 GenerateReportTask task = new GenerateReportTask();
                 setTaskDefaults(task);
                 task.setDataFile(dataFile);
-                task.setOutputFormat(outputFormat);
                 task.setOutputDirectory(outputDirectory);
                 List<String> allSourceRoots = new ArrayList<String>();
                 for (InheritProject ip : inheritProjects) {
@@ -83,7 +98,9 @@ public class CoberturaGenerateReportMojo extends AbstractCoberturaMojo {
                 }
                 allSourceRoots.addAll(project.getCompileSourceRoots());
                 task.setCompileSourceRoots(allSourceRoots);
-                task.execute();
+                for (int i = 0; i < formats.length; i++) {
+                    executeGenerateReportTask(task, formats[i]);
+                }
                 
                 projectHelper.attachArtifact(project, "ser", "cobertura", dataFile); 
                 
