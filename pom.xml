@@ -34,42 +34,58 @@
   <properties>
     <sitePluginVersion>2.0.1</sitePluginVersion>
   </properties>
+
+    <repositories>
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <distributionManagement>
+    <repository>
+      <uniqueVersion>false</uniqueVersion>
+      <id>java.net-m2-repository</id>
+      <!--url>svn:https://svn.dev.java.net/svn/maven2-repository/trunk/www/repository/</url-->
+      <url>java-net:/maven2-repository/trunk/repository/</url>
+    </repository>
+    <snapshotRepository>
+      <!-- prevent accidental deployment of SNAPSHOTS to repository -->
+      <id>local</id>
+      <url>file:.</url>
+    </snapshotRepository>
+  </distributionManagement>
+
   
   <developers>
     <developer>
-      <id>joakime</id>
-      <name>Joakim Erdfelt</name>
-      <email>joakim@erdfelt.net</email>
+      <id>abayer</id>
+      <name>Andrew Bayer</name>
+      <email>andrew.bayer@gmail.com</email>
       <roles>
         <role>Java Developer</role>
+        <role>Guy Who Forked This</role>
       </roles>
-      <timezone>-5</timezone>
-    </developer>
-    <developer>
-      <id>wgwaltney</id>
-      <name>Will Gwaltney</name>
-      <email>will.gwaltney@sas.com</email>
-      <roles>
-        <role>Java Developer</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>fgiust</id>
-      <name>Fabrizio Giustina</name>
-      <email>fgiust@apache.org</email>
-      <roles>
-        <role>Developer</role>
-      </roles>
-    </developer>
-    <developer>
-      <id>aheritier</id>
-      <name>Arnaud Heritier</name>
-      <email>aheritier@apache.org</email>
-      <roles>
-        <role>Developer</role>
-        <role>Despot</role>
-      </roles>
-      <timezone>+1</timezone>
+      <timezone>-8</timezone>
     </developer>
   </developers>
   <reporting>
