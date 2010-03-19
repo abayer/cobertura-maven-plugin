@@ -1,0 +1,354 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!--
+The MIT License
+
+Copyright (c) 2004-2009, Sun Microsystems, Inc., Kohsuke Kawaguchi, id:sorokh
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in
+all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN
+THE SOFTWARE.
+-->
+<project xmlns="http://maven.apache.org/POM/4.0.0" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="http://maven.apache.org/POM/4.0.0 http://maven.apache.org/maven-v4_0_0.xsd">
+  <modelVersion>4.0.0</modelVersion>
+  <parent>
+    <groupId>org.jvnet.hudson</groupId>
+    <artifactId>hudson</artifactId>
+    <version>1.7</version>
+    <relativePath>../pom.xml</relativePath>
+  </parent>
+  
+  <groupId>org.jvnet.hudson.main</groupId>
+  <artifactId>pom</artifactId>
+  <version>1.352-SNAPSHOT</version>
+  <packaging>pom</packaging>
+  
+  <name>Hudson main module</name>
+  <description>The module that constitutes the main hudson.war</description>
+  
+  <modules>
+    <module>remoting</module>
+    <module>core</module>
+    <module>maven-plugin</module>
+    <module>ui-samples-plugin</module>
+    <module>maven-agent</module>
+    <module>maven-interceptor</module>
+    <module>war</module>
+    <module>test</module>
+    <module>cli</module>
+  </modules>
+  
+  <ciManagement>
+      <system>Hudson</system>
+      <url>http://hudson.glassfish.org/job/hudson-trunk</url>
+  </ciManagement>
+  <scm>
+    <!-- release comes from the RC branch now -->
+    <connection>scm:svn:https://guest@svn.dev.java.net/svn/hudson/branches/rc/</connection>
+    <developerConnection>scm:svn:https://svn.dev.java.net/svn/hudson/branches/rc/</developerConnection>
+    <url>https://hudson.dev.java.net/source/browse/hudson/branches/rc/</url>
+  </scm>
+
+  <build>
+    <defaultGoal>install</defaultGoal>
+    <pluginManagement>
+      <plugins>
+        <plugin>
+          <groupId>org.kohsuke.gmaven</groupId>
+          <artifactId>gmaven-plugin</artifactId>
+          <version>1.0-rc-5-patch-2</version>
+          <dependencies>
+            <dependency><!-- this needs to be visible to Ant inside GMaven, so has to be a plugin dependency -->
+              <groupId>org.apache.ant</groupId>
+              <artifactId>ant-junit</artifactId>
+              <version>1.7.0</version>
+            </dependency>
+            <dependency>
+              <groupId>net.sourceforge.cobertura</groupId>
+              <artifactId>cobertura</artifactId>
+              <version>1.9</version>
+            </dependency>
+            <dependency>
+              <!-- this provided scope dependency doesn't get added to GMaven unless explicitly added here -->
+              <groupId>javax.servlet</groupId>
+              <artifactId>servlet-api</artifactId>
+              <version>2.4</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+        <plugin>
+          <groupId>org.jvnet.maven-antrun-extended-plugin</groupId>
+          <artifactId>maven-antrun-extended-plugin</artifactId>
+          <version>1.39</version>
+        </plugin>
+        <plugin>
+          <artifactId>maven-javadoc-plugin</artifactId>
+          <version>2.6.1</version>
+        </plugin>
+        <plugin>
+          <!--
+            Both test harness and core uses stapler as an extension,
+            and apparently without having extension preloaded at the parent, the main artifact of the 'test' module
+            ends up installed with 'stapler-jar' extension (which normally is an indication that the ArtifactTypeHandler
+            defined in this extension is not getting picked up.)
+
+            To avoid this problem, I'm defining an extension here. Not sure if the nested <dependencies> is necessary.
+            It's also possible that I misdiagnosed the problem and the root cause is something entirely different.
+
+            To test if you can remove this work around, do a rebuild from main and see if the test harness
+            is installed with the right extension into the local repository.
+          -->
+          <groupId>org.kohsuke.stapler</groupId>
+          <artifactId>maven-stapler-plugin</artifactId>
+          <version>1.14</version>
+          <extensions>true</extensions>
+          <dependencies>
+            <dependency>
+              <groupId>org.jvnet.maven-jellydoc-plugin</groupId>
+              <artifactId>maven-jellydoc-plugin</artifactId>
+              <version>1.4</version>
+            </dependency>
+          </dependencies>
+        </plugin>
+      </plugins>
+    </pluginManagement>
+    
+    <plugins>
+      <plugin>
+        <artifactId>maven-release-plugin</artifactId>
+        <version>2.0-beta-9</version>
+        <configuration>
+          <!-- enable release profile during the release, create IPS package, and sign bits. -->
+          <prepareVerifyArgs>-P release,ips,sign</prepareVerifyArgs>
+          <goals>-DskipTests javadoc:javadoc animal-sniffer:check deploy javadoc:aggregate</goals>
+          <remoteTagging>true</remoteTagging><!-- work around http://jira.codehaus.org/browse/SCM-406 -->
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-resources-plugin</artifactId>
+        <configuration>
+          <!--
+            *.html files are in UTF-8, and *.properties are in iso-8859-1, so this configuration is acturally incorrect,
+            but this suppresses a warning from Maven, and as long as we don't do filtering we should be OK.
+          -->
+          <encoding>UTF-8</encoding>
+        </configuration>
+      </plugin>
+      <plugin>
+        <artifactId>maven-remote-resources-plugin</artifactId>
+        <version>1.0</version>
+        <executions>
+          <execution>
+            <goals>
+              <goal>process</goal>
+            </goals>
+            <configuration>
+              <resourceBundles>
+                <resourceBundle>org.jvnet.hudson:license:1.0</resourceBundle>
+              </resourceBundles>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+      <plugin>
+        <!-- make sure our code doesn't have 1.6 dependencies except where we know it -->
+        <groupId>org.jvnet</groupId>
+        <artifactId>animal-sniffer</artifactId>
+        <version>1.2</version>
+        <configuration>
+          <signature>
+            <groupId>org.jvnet.animal-sniffer</groupId>
+            <artifactId>java1.5</artifactId>
+            <version>1.0</version>
+          </signature>
+        </configuration>
+      </plugin>
+
+      <plugin><!-- we specify this in the parent POM, so this is redundant, but otherwise IntelliJ is unhappy -->
+        <artifactId>maven-compiler-plugin</artifactId>
+        <configuration>
+          <source>1.5</source>
+          <target>1.5</target>
+        </configuration>
+      </plugin>
+
+      <plugin>
+        <artifactId>maven-enforcer-plugin</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>enforce</goal>
+            </goals>
+            <configuration>
+              <rules>
+                <!-- There is a bug in JDK 1.5's compiler therefore need to compile with 1.6 -->
+                <requireJavaVersion>
+                  <version>[1.6.0,]</version>
+                </requireJavaVersion>
+              </rules>
+            </configuration>
+          </execution>
+        </executions>
+      </plugin>
+
+      <plugin>
+        <!--
+          Since some developers try to run hudson-dev:run from main, define it here so that at least the plugin resolves.
+          This enables us to report a better error message.
+        -->
+        <groupId>org.jvnet.hudson.tools</groupId>
+        <artifactId>maven-hudson-dev-plugin</artifactId>
+        <version>6.1.7</version>
+      </plugin>
+
+      <!--<plugin>
+        <groupId>org.jvnet.fix1600</groupId>
+        <artifactId>fix1600</artifactId>
+        <executions>
+          <execution>
+            <goals>
+              <goal>fix</goal>
+            </goals>
+          </execution>
+        </executions>
+      </plugin>-->
+    </plugins>
+  </build>
+
+  <dependencies>
+    <dependency>
+      <!-- for JRE requirement check annotation -->
+      <groupId>org.jvnet</groupId>
+      <artifactId>animal-sniffer-annotation</artifactId>
+      <version>1.0</version>
+      <optional>true</optional><!-- no need to have this at runtime -->
+    </dependency>
+  </dependencies>
+
+  <properties>
+    <maven.version>2.0.9</maven.version>
+    <maven.embedder.version>2.0.4</maven.embedder.version>
+  </properties>
+
+  <profiles>
+    <profile>
+      <id>cobertura2</id>
+      <properties>
+        <sonar.dynamicAnalysis>reuseReports</sonar.dynamicAnalysis>
+        <sonar.surefire.reportsPath>${project.build.directory}/surefire-reports</sonar.surefire.reportsPath>
+        <sonar.cobertura.reportPath>${project.build.directory}/site/cobertura/coverage.xml</sonar.cobertura.reportPath>
+      </properties>
+    </profile>
+    <profile>
+      <id>debug</id>
+      <activation>
+        <activeByDefault>true</activeByDefault>
+      </activation>
+      <properties>
+        <hudson.sign.alias>hudson</hudson.sign.alias>
+        <hudson.sign.keystore>../dummy.keystore</hudson.sign.keystore>
+        <hudson.sign.storepass>hudson</hudson.sign.storepass>
+      </properties>
+    </profile>
+    <profile>
+      <id>sorcerer</id>
+      <reporting>
+        <plugins>
+          <plugin>
+            <groupId>org.jvnet.sorcerer</groupId>
+            <artifactId>maven-sorcerer-plugin</artifactId>
+            <version>0.8</version>
+          </plugin>
+        </plugins>
+      </reporting>
+      <build>
+        <plugins>
+          <plugin>
+            <groupId>org.jvnet.sorcerer</groupId>
+            <artifactId>maven-sorcerer-plugin</artifactId>
+            <version>0.8</version>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+    <profile>
+      <id>release</id>
+      <build>
+        <plugins>
+          <plugin>
+            <artifactId>maven-assembly-plugin</artifactId>
+            <inherited>false</inherited>
+            <executions>
+              <execution>
+                <goals>
+                  <goal>attached</goal>
+                </goals>
+                <phase>package</phase>
+                <configuration>
+                  <finalName>hudson-${version}</finalName>
+                  <descriptors>
+                    <descriptor>assembly-src.xml</descriptor>
+                  </descriptors>
+                </configuration>
+              </execution>
+            </executions>
+          </plugin>
+        </plugins>
+      </build>
+    </profile>
+  </profiles>
+  
+  <repositories>
+    <repository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </repository>
+  </repositories>
+
+  <pluginRepositories>
+    <pluginRepository>
+      <id>m.g.o-public</id>
+      <url>http://maven.glassfish.org/content/groups/public/</url>
+      <releases>
+        <enabled>true</enabled>
+      </releases>
+      <snapshots>
+        <enabled>false</enabled>
+      </snapshots>
+    </pluginRepository>
+  </pluginRepositories>
+
+  <licenses>
+    <license>
+      <name>The MIT license</name>
+      <url>http://www.opensource.org/licenses/mit-license.php</url>
+      <distribution>repo</distribution>
+    </license>
+  </licenses>
+
+  <distributionManagement>
+    <site>
+      <id>hudson-www</id>
+      <url>scp://hudson-ci.org/home/kohsuke/www/hudson-ci.org/maven-site/</url>
+    </site>
+  </distributionManagement>
+</project>
